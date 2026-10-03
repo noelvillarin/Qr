@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import AppButton from '@/components/AppButton';
@@ -6,6 +6,8 @@ import Header from '@/components/Header';
 import { COLORS } from '@/constants/colors';
 
 export default function Index() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
@@ -18,27 +20,18 @@ export default function Index() {
         <Text style={styles.subtitle}>
           Scan QR Codes to record attendance during school activities.
         </Text>
-      </View>
 
-      <View style={styles.footerContainer}>
-        <AppButton
-          theme="primary"
-          title="Scan QR Code"
-          icon="qr-code-outline"
-          onPress={() => router.push('/scan')}
-        />
+        <View style={styles.buttonsContainer}>
+          <AppButton
+            title="Scan QR Code"
+            onPress={() => router.push('/(tabs)/scan')}
+          />
 
-        <AppButton
-          title="Attendance History"
-          icon="time-outline"
-          onPress={() => router.push('/history')}
-        />
-
-        <AppButton
-          title="Profile"
-          icon="person-outline"
-          onPress={() => router.push('/profile')}
-        />
+          <AppButton
+            title="Attendance History"
+            onPress={() => router.push('/(tabs)/history')}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -73,11 +66,10 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: COLORS.textSecondary,
     textAlign: 'left',
+    marginBottom: 24,
   },
 
-  footerContainer: {
-    flex: 1 / 3,
-    paddingHorizontal: 24,
-    width: '100%',
+  buttonsContainer: {
+    gap: 12,
   },
 });

@@ -19,14 +19,21 @@ export default function RootLayout() {
   const path = segments?.[0];
 
   const inAuthGroup = path === 'login' || path === 'register';
-  const inTabsGroup = path === '(tabs)';
+
+  // No logged-in user:
+  // Only Login and Register are allowed.
+  if (!user && !inAuthGroup) {
+    return <Redirect href="/login" />;
+  }
+
+  // Logged-in user:
+  // Don't allow logged-in users to stay on Login/Register.
+  if (user && inAuthGroup) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {!user && inTabsGroup && <Redirect href="/login" />}
-
-      {user && inAuthGroup && <Redirect href="/(tabs)" />}
-
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
       <Stack.Screen name="(tabs)" />

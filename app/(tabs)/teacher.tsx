@@ -1,8 +1,9 @@
+
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   Platform,
@@ -23,10 +24,6 @@ import {
   type Role,
 } from '@/lib/profile';
 import { buildQRPayload } from '@/lib/qr';
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
 
 function toLocalISO(date: Date): string {
   const pad = (n: number) =>
@@ -54,12 +51,6 @@ function formatDateTime(date: Date): string {
   )}:${pad(date.getMinutes())}`;
 }
 
-/*
- * Generates a UUID v4.
- *
- * This is used internally as the Supabase event ID.
- * The teacher does NOT need to type a UUID.
- */
 function generateUUID(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
     /[xy]/g,
@@ -77,10 +68,6 @@ function generateUUID(): string {
   );
 }
 
-/* =========================================================
-   QUICK END OPTIONS
-   ========================================================= */
-
 const QUICK_END_OPTIONS = [
   {
     label: '+30 min',
@@ -96,10 +83,6 @@ const QUICK_END_OPTIONS = [
   },
 ];
 
-/* =========================================================
-   TYPES
-   ========================================================= */
-
 type EditTarget = 'start' | 'end';
 
 interface PickerFieldProps {
@@ -107,10 +90,6 @@ interface PickerFieldProps {
   icon: string;
   onPress: () => void;
 }
-
-/* =========================================================
-   PICKER FIELD
-   ========================================================= */
 
 function PickerField({
   value,
@@ -135,31 +114,15 @@ function PickerField({
   );
 }
 
-/* =========================================================
-   TEACHER SCREEN
-   ========================================================= */
-
 export default function TeacherScreen() {
-  /* =======================================================
-     ROLE
-     ======================================================= */
-
   const [role, setRole] =
     useState<Role | null>(null);
 
   const [roleLoading, setRoleLoading] =
     useState(true);
 
-  /* =======================================================
-     EVENT INFORMATION
-     ======================================================= */
-
   const [title, setTitle] = useState('');
   const [eventCode, setEventCode] = useState('');
-
-  /* =======================================================
-     DATE / TIME
-     ======================================================= */
 
   const [startDate, setStartDate] =
     useState(() => new Date());
@@ -173,19 +136,11 @@ export default function TeacherScreen() {
         )
     );
 
-  /* =======================================================
-     DATE PICKER
-     ======================================================= */
-
   const [editTarget, setEditTarget] =
     useState<EditTarget | null>(null);
 
   const [editingPart, setEditingPart] =
     useState<'date' | 'time'>('date');
-
-  /* =======================================================
-     QR / MESSAGE
-     ======================================================= */
 
   const [payload, setPayload] =
     useState<string | null>(null);
@@ -201,10 +156,6 @@ export default function TeacherScreen() {
 
   const isAndroid =
     Platform.OS === 'android';
-
-  /* =======================================================
-     CENTRALIZED ROLE CHECK
-     ======================================================= */
 
   useFocusEffect(
     useCallback(() => {
@@ -232,10 +183,6 @@ export default function TeacherScreen() {
     }, [])
   );
 
-  /* =======================================================
-     OPEN DATE/TIME PICKER
-     ======================================================= */
-
   const openPicker = (
     target: EditTarget
   ) => {
@@ -243,10 +190,6 @@ export default function TeacherScreen() {
     setEditTarget(target);
     setEditingPart('date');
   };
-
-  /* =======================================================
-     DATE/TIME PICKER CHANGE
-     ======================================================= */
 
   const onPickerChange = (
     event: DateTimePickerEvent,
@@ -291,10 +234,6 @@ export default function TeacherScreen() {
       setEndDate(next);
     }
 
-    /*
-     * Android shows date and time separately.
-     */
-
     if (
       isAndroid &&
       editingPart === 'date'
@@ -305,10 +244,6 @@ export default function TeacherScreen() {
       setEditingPart('date');
     }
   };
-
-  /* =======================================================
-     QUICK END TIME
-     ======================================================= */
 
   const handleQuickEnd = (
     ms: number
@@ -321,10 +256,6 @@ export default function TeacherScreen() {
       )
     );
   };
-
-  /* =======================================================
-     CREATE EVENT
-     ======================================================= */
 
   const handleCreateEvent = async () => {
     setMessage(null);
@@ -355,10 +286,6 @@ export default function TeacherScreen() {
       return;
     }
 
-    /*
-     * Generate the Supabase event ID.
-     */
-
     const generatedEventId =
       generateUUID();
 
@@ -367,27 +294,6 @@ export default function TeacherScreen() {
 
     const eventEnd =
       toLocalISO(endDate);
-
-    /*
-     * This matches the EventInput
-     * expected by lib/events.ts:
-     *
-     * {
-     *   eventId,
-     *   title,
-     *   start,
-     *   end
-     * }
-     *
-     * We intentionally do NOT put the
-     * teacher's short eventCode here.
-     *
-     * Your createEvent() uses event.eventCode
-     * when supplied; leaving it undefined makes
-     * event_code default to eventId. This keeps
-     * the QR's event value and database event_code
-     * consistent.
-     */
 
     const event = {
       eventId: generatedEventId,
@@ -399,13 +305,6 @@ export default function TeacherScreen() {
     try {
       setIsCreating(true);
 
-      /*
-       * SAVE EVENT TO SUPABASE FIRST.
-       *
-       * The QR is only generated after
-       * the database save succeeds.
-       */
-
       const result =
         await createEvent(event);
 
@@ -414,13 +313,6 @@ export default function TeacherScreen() {
           result.error
         );
       }
-
-      /*
-       * Use the shared QR builder.
-       *
-       * This produces the canonical v:1
-       * QR payload used by the scanner.
-       */
 
       const qrPayload =
         buildQRPayload(event);
@@ -446,21 +338,12 @@ export default function TeacherScreen() {
           : 'Unable to create event.'
       );
 
-      /*
-       * Remove any old QR after a
-       * failed creation.
-       */
-
       setPayload(null);
       setCreatedEventId(null);
     } finally {
       setIsCreating(false);
     }
   };
-
-  /* =======================================================
-     CLEAR / CREATE NEW EVENT
-     ======================================================= */
 
   const handleCreateNew = () => {
     setTitle('');
@@ -482,10 +365,6 @@ export default function TeacherScreen() {
     setCreatedEventId(null);
     setMessage(null);
   };
-
-  /* =======================================================
-     ROLE GUARDS
-     ======================================================= */
 
   if (roleLoading) {
     return (
@@ -529,10 +408,6 @@ export default function TeacherScreen() {
     );
   }
 
-  /* =======================================================
-     RENDER
-     ======================================================= */
-
   return (
     <ScrollView
       style={styles.container}
@@ -541,10 +416,6 @@ export default function TeacherScreen() {
       }
       keyboardShouldPersistTaps="handled"
     >
-      {/* =================================================
-          HEADER
-          ================================================= */}
-
       <Text style={styles.title}>
         Create Event QR
       </Text>
@@ -554,10 +425,6 @@ export default function TeacherScreen() {
         scan the generated QR with the
         Scan tab.
       </Text>
-
-      {/* =================================================
-          EVENT TITLE
-          ================================================= */}
 
       <Text style={styles.label}>
         Event Title
@@ -572,10 +439,6 @@ export default function TeacherScreen() {
           COLORS.textSecondary
         }
       />
-
-      {/* =================================================
-          EVENT CODE
-          ================================================= */}
 
       <Text style={styles.label}>
         Event Code
@@ -598,10 +461,6 @@ export default function TeacherScreen() {
         is generated automatically.
       </Text>
 
-      {/* =================================================
-          START TIME
-          ================================================= */}
-
       <Text style={styles.label}>
         Start
       </Text>
@@ -616,10 +475,6 @@ export default function TeacherScreen() {
         }
       />
 
-      {/* =================================================
-          END TIME
-          ================================================= */}
-
       <Text style={styles.label}>
         End
       </Text>
@@ -633,10 +488,6 @@ export default function TeacherScreen() {
           openPicker('end')
         }
       />
-
-      {/* =================================================
-          QUICK END BUTTONS
-          ================================================= */}
 
       <Text style={styles.quickLabel}>
         Quick end time
@@ -668,10 +519,6 @@ export default function TeacherScreen() {
         )}
       </View>
 
-      {/* =================================================
-          DATE TIME PICKER
-          ================================================= */}
-
       {editTarget && (
         <DateTimePicker
           value={
@@ -697,10 +544,6 @@ export default function TeacherScreen() {
         />
       )}
 
-      {/* =================================================
-          CREATE BUTTON
-          ================================================= */}
-
       <View
         style={
           styles.buttonContainer
@@ -719,10 +562,6 @@ export default function TeacherScreen() {
         />
       </View>
 
-      {/* =================================================
-          MESSAGE
-          ================================================= */}
-
       {message && (
         <View
           style={
@@ -738,10 +577,6 @@ export default function TeacherScreen() {
           </Text>
         </View>
       )}
-
-      {/* =================================================
-          QR CODE
-          ================================================= */}
 
       {payload && (
         <View
@@ -770,10 +605,6 @@ export default function TeacherScreen() {
               color="black"
             />
           </View>
-
-          {/* -------------------------------------------
-              EVENT INFORMATION
-              ------------------------------------------- */}
 
           <View
             style={
@@ -869,10 +700,6 @@ export default function TeacherScreen() {
             )}
           </View>
 
-          {/* -------------------------------------------
-              CREATE ANOTHER EVENT
-              ------------------------------------------- */}
-
           <View
             style={
               styles.buttonContainer
@@ -891,15 +718,7 @@ export default function TeacherScreen() {
   );
 }
 
-/* =========================================================
-   STYLES
-   ========================================================= */
-
 const styles = StyleSheet.create({
-  /* -------------------------------------------------------
-     ROLE LOCK SCREEN
-     ------------------------------------------------------- */
-
   lockScreen: {
     flex: 1,
     backgroundColor:
@@ -924,10 +743,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
-
-  /* -------------------------------------------------------
-     MAIN SCREEN
-     ------------------------------------------------------- */
 
   container: {
     flex: 1,

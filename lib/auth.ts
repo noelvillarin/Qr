@@ -166,6 +166,10 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
+    /* -------------------------------------------------------
+       LOAD EXISTING SESSION
+       ------------------------------------------------------- */
+
     const loadSession = async () => {
       const {
         data,
@@ -194,6 +198,10 @@ export function useAuth() {
 
     loadSession();
 
+    /* -------------------------------------------------------
+       LISTEN FOR AUTH CHANGES
+       ------------------------------------------------------- */
+
     const {
       data: {
         subscription,
@@ -213,6 +221,10 @@ export function useAuth() {
         }
       );
 
+    /* -------------------------------------------------------
+       CLEANUP
+       ------------------------------------------------------- */
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
@@ -224,4 +236,3 @@ export function useAuth() {
     loading,
   };
 }
-
